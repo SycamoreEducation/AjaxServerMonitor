@@ -1,15 +1,20 @@
 <?
 
-$dblink = mysql_connect("localhost", "topper","bubba123");
-//print("DB: $dblink");
-$sc = mysql_select_db("sls", $dblink);
+require_once("passwords.inc");
+
+$user = $_SERVER['PHP_AUTH_USER'];
+$pass = $_SERVER['PHP_AUTH_PW'];
+$pass = $_SERVER['PHP_AUTH_PW'];
+
+
+$dblink = mysql_connect(DB_HOST, DB_USER,DB_PASS);
+$sc = mysql_select_db(DB_NAME, $dblink);
 
 $update=$_GET["update"];
 $plot=$_GET["plot"];
 $xscale=$_GET["xscale"];
 if(empty($xscale)) $xscale = 1;
-//error_log("Update: $update Plot: $plot Xscale: $xscale");
-
+/*
 function formattime($time) {
     settype($time,'int');
     while($time%60 != 00){
@@ -21,6 +26,7 @@ function formattime($time) {
     $csttime->setTimeZone(new DateTimeZone('America/Chicago'));
     return $time; 
 }
+*/
 if($plot == 'db' || $plot=='cloud') {
 
     if($plot == 'db') $type = 1;
@@ -28,7 +34,6 @@ if($plot == 'db' || $plot=='cloud') {
     $dbscale = $xscale *60 +1;
     if($xscale == 1 || $xscale == 24) $filter = 10;
     else $filter = 12;
-    //error_log($dbscale);
 
     $data = Array(Array());
     $dbnames = Array();
@@ -47,9 +52,7 @@ if($plot == 'db' || $plot=='cloud') {
         $dbnames[0][$i] = $servername;
         $dbnames[1][$i] = $serverlabel;
     }
-    //echo "XSCALE:$xscale<br>";
     foreach($dbnames[0] as $key => $db){
-        //$sql  = "SELECT DATE_FORMAT(DateTime, '%H:%i') Time, ";
         $sql  = "SELECT UNIX_TIMESTAMP(DateTime) UnixTime, ";
         $sql .= "LoadAverage, DateTime  ";
         $sql .= "FROM ServerLoad ";
@@ -68,12 +71,12 @@ if($plot == 'db' || $plot=='cloud') {
                 $unixtime = mysql_result($rs, $i, 'UnixTime');
                 $testtime = mysql_result($rs, $i, 'DateTime');
 
-                $converted=formattime($unixtime);
+                //$converted=formattime($unixtime);
                 settype($loadavg, "float");
-                settype($converted, "int");
-                //if($i%($filter*$xscale/4)==0) echo "DB: $db  Time: $testtime <br>";
+                //settype($converted, "int");
+                settype($unixtime, "int");
 
-                if($key==0) $dbarray[$key][]=Array($converted,$loadavg);
+                if($key==0) $dbarray[$key][]=Array($unixtime,$loadavg);
                 else $dbarray[$key][]=Array($dbarray[0][$i/$xscale][0],$loadavg);
             }
         }
@@ -83,7 +86,6 @@ if($plot == 'db' || $plot=='cloud') {
     }
     $data[0]= $dbarray;
     $data[1]= $dbnames[1];
-    //var_dump($data);
     if(empty($update)) echo json_encode($data);
     else echo json_encode($dbarray);
     exit;
@@ -104,16 +106,14 @@ if($plot=='user'){
     else $sql .="LIMIT $userscale ";
     $rs = mysql_query($sql);
     if($rs) $rsc = mysql_num_rows($rs);
-    //error_log("USQL:$sql");
     
     
     for($i=0; $i < $rsc; $i++){
         $usercount = mysql_result($rs, $i, 'Count');
         $time = mysql_result($rs, $i, 'UnixTime');
         settype($usercount,"int");
-        $converted = formattime($time);
-        settype($converted,"int");
-        $userarray[]=Array($converted,$usercount);
+        settype($time,"int");
+        $userarray[]=Array($time,$usercount);
     }
     $data = array_reverse($userarray);
     echo json_encode($data);
