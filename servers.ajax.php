@@ -14,19 +14,21 @@ $update=$_GET["update"];
 $plot=$_GET["plot"];
 $xscale=$_GET["xscale"];
 if(empty($xscale)) $xscale = 1;
-/*
+
 function formattime($time) {
     settype($time,'int');
     while($time%60 != 00){
         if($time%60 >= 30) $time++;
         else $time--;
     }
+/*
     $utctime = DateTime::createFromFormat('U',$time, new DateTimeZone('UTC'));
     $csttime = $utctime;
     $csttime->setTimeZone(new DateTimeZone('America/Chicago'));
+*/
     return $time; 
 }
-*/
+
 if($plot == 'db' || $plot=='cloud') {
 
     if($plot == 'db') $type = 1;
@@ -71,12 +73,12 @@ if($plot == 'db' || $plot=='cloud') {
                 $unixtime = mysql_result($rs, $i, 'UnixTime');
                 $testtime = mysql_result($rs, $i, 'DateTime');
 
-                //$converted=formattime($unixtime);
+                $converted=formattime($unixtime);
                 settype($loadavg, "float");
-                //settype($converted, "int");
+                settype($converted, "int");
                 settype($unixtime, "int");
 
-                if($key==0) $dbarray[$key][]=Array($unixtime,$loadavg);
+                if($key==0) $dbarray[$key][]=Array($converted,$loadavg);
                 else $dbarray[$key][]=Array($dbarray[0][$i/$xscale][0],$loadavg);
             }
         }
@@ -111,9 +113,11 @@ if($plot=='user'){
     for($i=0; $i < $rsc; $i++){
         $usercount = mysql_result($rs, $i, 'Count');
         $time = mysql_result($rs, $i, 'UnixTime');
+        $converted=formattime($time);
         settype($usercount,"int");
         settype($time,"int");
-        $userarray[]=Array($time,$usercount);
+        settype($converted,"int");
+        $userarray[]=Array($converted,$usercount);
     }
     $data = array_reverse($userarray);
     echo json_encode($data);
