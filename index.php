@@ -408,7 +408,7 @@ function changeXScale(x){
     clearInterval(dbintervalID);
     var updateint = 30000;
     if(xscale==1) updateint = 30000;
-    else updateint = (xscale * 60000);
+    else if(xscale>1) updateint = (xscale * 60000);
     dbintervalID = setInterval(doUpdateDB, updateint);
     userintervalID = setInterval(doUpdateUser, updateint);
     if (typeof dbplot !== 'undefined') {
@@ -844,7 +844,7 @@ $(document).ready(function() {
     $('.jqplot-title').css('left',titleleft);
     var updateint = 30000;
     if(xscale==1) updateint = 30000;
-    else updateint = (xscale * 60000);
+    else if(xscale>1) updateint = (xscale * 60000);
     dbintervalID = setInterval(doUpdateDB, updateint);
     userintervalID = setInterval(doUpdateUser, updateint);
 });
