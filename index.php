@@ -769,6 +769,7 @@ function doUpdateDB() {
         if (typeof cloudplot !== 'undefined' && change==true) {
             cloudplot.destroy();
         }
+
         if(change == true){
             cloudoptions.axes.xaxis.ticks = buildtickarray(update[0][0][0],xscale);
             var width = $('#cloudchart').width();
@@ -823,7 +824,6 @@ $(window).resize(function() {
     $('#userchart').height(plotheight);
     $('#miscinfo').css('height',bgheight); 
     $('#chartbackground').css('height',bgheight); 
-    $('#charts').css('height',bgheight); 
     //$('#db').css('padding-top',dropheight1); 
     //$('#cloud').css('padding-top',dropheight2); 
     //$('#user').css('padding-top',dropheight2); 
