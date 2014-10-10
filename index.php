@@ -27,6 +27,7 @@ if (!$validated) {
 <TITLE>Site Monitor</TITLE>
 <META http-equiv="X-UA-Compatible" content="IE=9">
 <META charset="UTF-8">
+<meta http-equiv="refresh" content="1800" >
 
 <META HTTP-EQUIV="Expires" CONTENT="Fri, Jun 12 1981 08:20:00 GMT">
 <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
@@ -344,6 +345,7 @@ if($task == "")
 <SCRIPT>
 
 function doPageRefresh() {
+/*
     if (typeof dbplot !== 'undefined') {
         dbplot.destroy();
     }
@@ -354,8 +356,9 @@ function doPageRefresh() {
         userplot.destroy();
     }
     drawplots(xscale, 'all');
-    
-    //window.location = "index.php?plot=all&xscale="+xscale;
+*/    
+    xscale = Number($("#scalehoursdrop").val());
+    window.location = "index.php?plot=all&xscale="+xscale;
 }
 function doSidebar(){
   if (sidebar == 0) {
@@ -846,8 +849,7 @@ $(window).resize(function() {
     userplot.replot();
 });
 $(document).ready(function() {
-    h = document.getElementById("scalehoursdrop");
-    xscale = Number(h.options[h.selectedIndex].value);
+    xscale = Number($("#scalehoursdrop").val());
     height = Number($(window).height());
     plotheight = height * .240;
 
@@ -864,6 +866,7 @@ $(document).ready(function() {
     //setTimeout(doPageRefresh(xscale), 3600000);
 });
 
+//setInterval(doPageRefresh,10000);
 </SCRIPT>
 
 </BODY>

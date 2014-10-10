@@ -78,8 +78,9 @@ if($plot == 'db' || $plot=='cloud') {
                 settype($converted, "int");
                 settype($unixtime, "int");
 
-                if($key==0) $dbarray[$key][]=Array($converted,$loadavg);
-                else $dbarray[$key][]=Array($dbarray[0][$i/$xscale][0],$loadavg);
+                $dbarray[$key][]=Array($converted,$loadavg);
+                //if($key==0) $dbarray[$key][]=Array($converted,$loadavg);
+                //else $dbarray[$key][]=Array($dbarray[0][$i/$xscale][0],$loadavg);
             }
         }
     }
