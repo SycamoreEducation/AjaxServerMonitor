@@ -343,6 +343,20 @@ if($task == "")
 
 <SCRIPT>
 
+function doPageRefresh() {
+    if (typeof dbplot !== 'undefined') {
+        dbplot.destroy();
+    }
+    if (typeof cloudplot !== 'undefined') {
+        cloudplot.destroy();
+    }
+    if (typeof userplot !== 'undefined') {
+        userplot.destroy();
+    }
+    drawplots(xscale, 'all');
+    
+    //window.location = "index.php?plot=all&xscale="+xscale;
+}
 function doSidebar(){
   if (sidebar == 0) {
     $("#sidebarcontainerdiv").removeClass("containersidebar");
@@ -847,6 +861,7 @@ $(document).ready(function() {
     else if(xscale>1) updateint = (xscale * 60000);
     dbintervalID = setInterval(doUpdateDB, updateint);
     userintervalID = setInterval(doUpdateUser, updateint);
+    //setTimeout(doPageRefresh(xscale), 3600000);
 });
 
 </SCRIPT>
