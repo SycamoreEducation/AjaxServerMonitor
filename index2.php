@@ -1,5 +1,5 @@
 <?
-require_once("servers.ajax.php");
+require_once("servers2.ajax.php");
 require_once("passwords.inc");
 ?>
 
@@ -345,7 +345,7 @@ if($task == "")
 
 function doPageRefresh() {
     xscale = Number($("#scalehoursdrop").val());
-    window.location = "index.php?plot=all&xscale="+xscale;
+    window.location = "index2.php?plot=all&xscale="+xscale;
 }
 function doSidebar(){
   if (sidebar == 0) {
@@ -489,7 +489,7 @@ function buildtickarray(scale,plot){
 
 function drawplots(xscale, plot){
     if(plot == 'db' || plot == 'all'){
-        $.getJSON("index.php?plot=db&xscale="+xscale,function(dbresults){
+        $.getJSON("index2.php?plot=db&xscale="+xscale,function(dbresults){
             var yscale = $("#dbdrop").val();
             currentdbresults = deepObjCopy(dbresults);
             dbarray = currentdbresults[0]; 
@@ -558,7 +558,7 @@ function drawplots(xscale, plot){
         });
     }
     if(plot == 'cloud' || plot == 'all'){
-        $.getJSON("index.php?plot=cloud&xscale="+xscale,function(cloudresults){
+        $.getJSON("index2.php?plot=cloud&xscale="+xscale,function(cloudresults){
             var e = document.getElementById("clouddrop");
             var yscale = e.options[e.selectedIndex].value;
 
@@ -631,7 +631,7 @@ function drawplots(xscale, plot){
         });
     }
     if(plot == 'user' || plot == 'all'){
-        $.getJSON("index.php?plot=user&xscale="+xscale,function(userresults){
+        $.getJSON("index2.php?plot=user&xscale="+xscale,function(userresults){
             var e = document.getElementById("userdrop");
             var yscale = e.options[e.selectedIndex].value;
 
@@ -693,7 +693,7 @@ function drawplots(xscale, plot){
     }
 };    
 function doUpdateDB() {      
-    $.getJSON("index.php?plot=db&update=1",function(update){
+    $.getJSON("index2.php?plot=db&update=1",function(update){
         var change = false;
         var currentmin = Math.round(Date.now()/1000);
         for(i = 0; i < update.length; i++) {
@@ -719,7 +719,7 @@ function doUpdateDB() {
             $('.jqplot-title').css('left',titleleft);
         };
     });
-    $.getJSON("index.php?plot=cloud&update=1",function(update){
+    $.getJSON("index2.php?plot=cloud&update=1",function(update){
         var change = false;
         var currentmin = Math.round(Date.now()/1000);
         for(i = 0; i < update.length; i++) {
@@ -747,7 +747,7 @@ function doUpdateDB() {
     });
 }
 function doUpdateUser() {
-    $.getJSON("index.php?plot=user&update=1",function(update){
+    $.getJSON("index2.php?plot=user&update=1",function(update){
         if(xscale > 10){
             var interval = 1440;
         }else{

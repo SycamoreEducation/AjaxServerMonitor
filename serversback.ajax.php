@@ -14,22 +14,18 @@ $update=$_GET["update"];
 $plot=$_GET["plot"];
 $xscale=$_GET["xscale"];
 if(empty($xscale)) $xscale = 1;
-if(empty($update)) $update = 0;
-//$plot='db';
-
-$newtime = time();
-$endtime = $newtime-$newtime%60+30;
-if($update==0)$starttime = $endtime-3720*$xscale;
-if($update==1)$starttime = $endtime-60*$xscale;
-//echo "Start: $starttime <br> End: $endtime <br> ";
 
 function formattime($time) {
     settype($time,'int');
-    if($time%60 >= 30){
-        $time += 60-$time%60;
-    }elseif($time%60<30){
-        $time-= $time%60;
+    while($time%60 != 00){
+        if($time%60 >= 30) $time++;
+        else $time--;
     }
+/*
+    $utctime = DateTime::createFromFormat('U',$time, new DateTimeZone('UTC'));
+    $csttime = $utctime;
+    $csttime->setTimeZone(new DateTimeZone('America/Chicago'));
+*/
     return $time; 
 }
 
@@ -59,7 +55,6 @@ if($plot == 'db' || $plot=='cloud') {
         $dbnames[1][$i] = $serverlabel;
     }
     foreach($dbnames[0] as $key => $db){
-/*
         $sql  = "SELECT UNIX_TIMESTAMP(DateTime) UnixTime, ";
         $sql .= "LoadAverage, DateTime  ";
         $sql .= "FROM ServerLoad ";
@@ -67,19 +62,9 @@ if($plot == 'db' || $plot=='cloud') {
         $sql .= "ORDER BY -UnixTime ";
         if($update == 1) $sql .= "LIMIT 1";
         else $sql .= "LIMIT $dbscale ";
-*/
-        $sql  = "SELECT UNIX_TIMESTAMP(DateTime) UnixTime";
-        $sql .= ", LoadAverage, DateTime ";
-        $sql .= "FROM ServerLoad ";
-        $sql .= "WHERE Hostname = '$db' ";
-        $sql .= "HAVING UnixTime >= $starttime "; 
-        $sql .= "AND UnixTime <= $endtime ";
-        $sql .= "ORDER BY -UnixTime ";
-        //if($update == 1) $sql .= "LIMIT 1";
-        //else $sql .= "LIMIT $dbscale ";
         $rs = mysql_query($sql);
         if($rs) $rsc = mysql_num_rows($rs);
-        //echo "SQL:$sql<br>";
+
         settype($key, "int");
 
         for($i=0; $i < $rsc; $i++){
