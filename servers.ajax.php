@@ -19,7 +19,7 @@ if(empty($update)) $update = 0;
 
 $newtime = time();
 $endtime = $newtime-$newtime%60+30;
-if($update==0)$starttime = $endtime-3720*$xscale;
+if($update==0)$starttime = $endtime-3780*$xscale;
 if($update==1)$starttime = $endtime-60*$xscale;
 //echo "Start: $starttime <br> End: $endtime <br> ";
 
@@ -59,31 +59,22 @@ if($plot == 'db' || $plot=='cloud') {
         $dbnames[1][$i] = $serverlabel;
     }
     foreach($dbnames[0] as $key => $db){
-/*
-        $sql  = "SELECT UNIX_TIMESTAMP(DateTime) UnixTime, ";
-        $sql .= "LoadAverage, DateTime  ";
-        $sql .= "FROM ServerLoad ";
-        $sql .= "WHERE Hostname = '$db' ";
-        $sql .= "ORDER BY -UnixTime ";
-        if($update == 1) $sql .= "LIMIT 1";
-        else $sql .= "LIMIT $dbscale ";
-*/
-        $sql  = "SELECT UNIX_TIMESTAMP(DateTime) UnixTime";
         $sql .= ", LoadAverage, DateTime ";
         $sql .= "FROM ServerLoad ";
         $sql .= "WHERE Hostname = '$db' ";
         $sql .= "HAVING UnixTime >= $starttime "; 
         $sql .= "AND UnixTime <= $endtime ";
+        $sql .= "AND ROWID%$xscale = 0 ";
         $sql .= "ORDER BY -UnixTime ";
         //if($update == 1) $sql .= "LIMIT 1";
         //else $sql .= "LIMIT $dbscale ";
         $rs = mysql_query($sql);
         if($rs) $rsc = mysql_num_rows($rs);
-        //echo "SQL:$sql<br>";
+        echo "SQL:$sql<br>";
         settype($key, "int");
 
         for($i=0; $i < $rsc; $i++){
-            if($i%$xscale==0){
+            //if($i%$xscale==0){
                 $loadavg = mysql_result($rs, $i, 'LoadAverage');
                 $unixtime = mysql_result($rs, $i, 'UnixTime');
                 $testtime = mysql_result($rs, $i, 'DateTime');
@@ -96,7 +87,7 @@ if($plot == 'db' || $plot=='cloud') {
                 $dbarray[$key][]=Array($converted,$loadavg);
                 //if($key==0) $dbarray[$key][]=Array($converted,$loadavg);
                 //else $dbarray[$key][]=Array($dbarray[0][$i/$xscale][0],$loadavg);
-            }
+            //}
         }
     }
     foreach($dbarray as $key => $a){ 
