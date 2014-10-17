@@ -27,7 +27,6 @@ if (!$validated) {
 <TITLE>Site Monitor</TITLE>
 <META http-equiv="X-UA-Compatible" content="IE=9">
 <META charset="UTF-8">
-<meta http-equiv="refresh" content="1800" >
 
 <META HTTP-EQUIV="Expires" CONTENT="Fri, Jun 12 1981 08:20:00 GMT">
 <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
@@ -71,7 +70,7 @@ body {
   margin: 0px;
   background-image: url("/images/background.jpg");
   background-size: 100%;
-  background-height: 100%;
+  /*background-height: 100%;*/
   background-repeat: no-repeat;
 }
 
@@ -345,7 +344,9 @@ if($task == "")
 
 function doPageRefresh() {
     xscale = Number($("#scalehoursdrop").val());
-    window.location = "index.php?plot=all&xscale="+xscale;
+    //window.location = "index.php?plot=all&xscale="+xscale;
+    location.reload(); 
+    console.log("Refresh");
 }
 function doSidebar(){
   if (sidebar == 0) {
@@ -691,25 +692,35 @@ function drawplots(xscale, plot){
             $('.jqplot-title').css('left',titleleft);
         });
     }
+//setInterval(doPageRefresh,1800000);
 };    
 function doUpdateDB() {      
     $.getJSON("index.php?plot=db&update=1",function(update){
         var change = false;
+        var force = false;
         var currentmin = Math.round(Date.now()/1000);
         for(i = 0; i < update.length; i++) {
             var newmin = update[i][0][0];
             var oldmin = dbarray[i][dbarray[i].length-1][0];
+            var diff=parseInt(currentmin)-parseInt(newmin);
             var fakemin = oldmin + 60;
             if(newmin-oldmin == xscale*60){
+                console.log("change"+i);
                 dbarray[i].shift();
                 dbarray[i].push(update[i][0]);
                 change = true;
             }else if(currentmin - newmin >=xscale*60){
+                console.log("force"+i);
                 dbarray[i].shift();
                 dbarray[i].push(fakemin,0);
+                force = true;
             }
         };
-        if(currentmin - newmin >= 60 || change==true){
+        console.log("C "+currentmin);
+        console.log("N "+newmin);
+        console.log("D "+diff);
+        if(force==true || change==true){
+            console.log("DB update");
             dbplot.destroy();
             dboptions.axes.xaxis.ticks = buildtickarray(xscale,'db');
             var width = $('#dbchart').width();
@@ -721,6 +732,7 @@ function doUpdateDB() {
     });
     $.getJSON("index.php?plot=cloud&update=1",function(update){
         var change = false;
+        var force = false;
         var currentmin = Math.round(Date.now()/1000);
         for(i = 0; i < update.length; i++) {
             var newmin = update[i][0][0];
@@ -730,12 +742,14 @@ function doUpdateDB() {
                 cloudarray[i].shift();
                 cloudarray[i].push(update[i][0]);
                 change = true;
-            }else if(currentmin - newmin >=xscale*60){
+            }else if(currentmin - newmin >= xscale*60){
                 cloudarray[i].shift();
                 cloudarray[i].push(fakemin,0);
+                var force = true;
             }
         };
-        if(currentmin - newmin >= 60 || change==true){
+        if(force==true || change==true){
+            console.log("Cloud update");
             cloudplot.destroy();
             cloudoptions.axes.xaxis.ticks = buildtickarray(xscale,'cloud');
             var width = $('#cloudchart').width();
@@ -807,6 +821,7 @@ $(document).ready(function() {
     else if(xscale>1) updateint = (xscale * 60000);
     dbintervalID = setInterval(doUpdateDB, updateint);
     userintervalID = setInterval(doUpdateUser, updateint);
+    //setInterval(doPageRefresh,10000);
 });
 
 </SCRIPT>

@@ -1,4 +1,7 @@
 passwords.inc
-indexbackup.php
-ajaxbackup.php
+indexstage.php
+serverstage.php
+index2.php
+servers2.ajax.php
+test.php
 

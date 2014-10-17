@@ -27,7 +27,6 @@ if (!$validated) {
 <TITLE>Site Monitor</TITLE>
 <META http-equiv="X-UA-Compatible" content="IE=9">
 <META charset="UTF-8">
-<meta http-equiv="refresh" content="1800" >
 
 <META HTTP-EQUIV="Expires" CONTENT="Fri, Jun 12 1981 08:20:00 GMT">
 <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
@@ -71,7 +70,7 @@ body {
   margin: 0px;
   background-image: url("/images/background.jpg");
   background-size: 100%;
-  background-height: 100%;
+  /*background-height: 100%;*/
   background-repeat: no-repeat;
 }
 
@@ -318,7 +317,7 @@ function displayperformance(){
     </p>
 
     <p class="sidebartext">
-      What is monitored by this can be changed, but currently it is set up to benefit the developers at Sycamore Education in allowing them to see the current state of the servers, as well as the history of the servers.
+      What is monitored by this can be changed, but currently it is set up to benefit the developers at Sycamore Education in allowing them to see the current state of the servers, as well as the history of the servers2.
     </p>
 
     <p class="sidebartext">
@@ -345,7 +344,9 @@ if($task == "")
 
 function doPageRefresh() {
     xscale = Number($("#scalehoursdrop").val());
-    window.location = "index2.php?plot=all&xscale="+xscale;
+    //window.location = "index.php?plot=all&xscale="+xscale;
+    location.reload(); 
+    console.log("Refresh");
 }
 function doSidebar(){
   if (sidebar == 0) {
@@ -489,7 +490,7 @@ function buildtickarray(scale,plot){
 
 function drawplots(xscale, plot){
     if(plot == 'db' || plot == 'all'){
-        $.getJSON("index2.php?plot=db&xscale="+xscale,function(dbresults){
+        $.getJSON("index.php?plot=db&xscale="+xscale,function(dbresults){
             var yscale = $("#dbdrop").val();
             currentdbresults = deepObjCopy(dbresults);
             dbarray = currentdbresults[0]; 
@@ -558,7 +559,7 @@ function drawplots(xscale, plot){
         });
     }
     if(plot == 'cloud' || plot == 'all'){
-        $.getJSON("index2.php?plot=cloud&xscale="+xscale,function(cloudresults){
+        $.getJSON("index.php?plot=cloud&xscale="+xscale,function(cloudresults){
             var e = document.getElementById("clouddrop");
             var yscale = e.options[e.selectedIndex].value;
 
@@ -631,7 +632,7 @@ function drawplots(xscale, plot){
         });
     }
     if(plot == 'user' || plot == 'all'){
-        $.getJSON("index2.php?plot=user&xscale="+xscale,function(userresults){
+        $.getJSON("index.php?plot=user&xscale="+xscale,function(userresults){
             var e = document.getElementById("userdrop");
             var yscale = e.options[e.selectedIndex].value;
 
@@ -691,25 +692,33 @@ function drawplots(xscale, plot){
             $('.jqplot-title').css('left',titleleft);
         });
     }
+//setInterval(doPageRefresh,1800000);
 };    
 function doUpdateDB() {      
-    $.getJSON("index2.php?plot=db&update=1",function(update){
+    $.getJSON("index.php?plot=db&update=1",function(update){
         var change = false;
+        var force = false;
         var currentmin = Math.round(Date.now()/1000);
         for(i = 0; i < update.length; i++) {
             var newmin = update[i][0][0];
             var oldmin = dbarray[i][dbarray[i].length-1][0];
             var fakemin = oldmin + 60;
             if(newmin-oldmin == xscale*60){
+                console.log("change"+i);
                 dbarray[i].shift();
                 dbarray[i].push(update[i][0]);
                 change = true;
             }else if(currentmin - newmin >=xscale*60){
+                console.log("force"+i);
                 dbarray[i].shift();
                 dbarray[i].push(fakemin,0);
+                force = true;
             }
         };
-        if(currentmin - newmin >= 60 || change==true){
+        console.log("C "+currentmin);
+        console.log("N "+newmin);
+        console.log("D "+diff);
+        if(force==true || change==true){
             dbplot.destroy();
             dboptions.axes.xaxis.ticks = buildtickarray(xscale,'db');
             var width = $('#dbchart').width();
@@ -719,24 +728,27 @@ function doUpdateDB() {
             $('.jqplot-title').css('left',titleleft);
         };
     });
-    $.getJSON("index2.php?plot=cloud&update=1",function(update){
+    $.getJSON("index.php?plot=cloud&update=1",function(update){
         var change = false;
+        var force = false;
         var currentmin = Math.round(Date.now()/1000);
         for(i = 0; i < update.length; i++) {
             var newmin = update[i][0][0];
+            var diff=parseInt(currentmin)-parseInt(newmin);
             var oldmin = cloudarray[i][cloudarray[i].length-1][0];
             var fakemin = oldmin + 60;
             if(newmin-oldmin == xscale*60){
                 cloudarray[i].shift();
                 cloudarray[i].push(update[i][0]);
                 change = true;
-            }else if(currentmin - newmin >=xscale*60){
+            }else if(currentmin - newmin >= xscale*60){
                 cloudarray[i].shift();
                 cloudarray[i].push(fakemin,0);
+                var force = true;
             }
         };
-        if(currentmin - newmin >= 60 || change==true){
-            cloudplot.destroy();
+        if(force==true || change==true){
+            //console.log("Cloud update");
             cloudoptions.axes.xaxis.ticks = buildtickarray(xscale,'cloud');
             var width = $('#cloudchart').width();
             titleleft = width * .03;
@@ -747,7 +759,7 @@ function doUpdateDB() {
     });
 }
 function doUpdateUser() {
-    $.getJSON("index2.php?plot=user&update=1",function(update){
+    $.getJSON("index.php?plot=user&update=1",function(update){
         if(xscale > 10){
             var interval = 1440;
         }else{
@@ -807,6 +819,7 @@ $(document).ready(function() {
     else if(xscale>1) updateint = (xscale * 60000);
     dbintervalID = setInterval(doUpdateDB, updateint);
     userintervalID = setInterval(doUpdateUser, updateint);
+    //setInterval(doPageRefresh,10000);
 });
 
 </SCRIPT>

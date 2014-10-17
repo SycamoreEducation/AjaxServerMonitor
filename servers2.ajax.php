@@ -19,7 +19,7 @@ if(empty($update)) $update = 0;
 
 $newtime = time();
 $endtime = $newtime-$newtime%60+30;
-if($update==0)$starttime = $endtime-3720*$xscale;
+if($update==0)$starttime = $endtime-3780*$xscale;
 if($update==1)$starttime = $endtime-60*$xscale;
 //echo "Start: $starttime <br> End: $endtime <br> ";
 
@@ -59,15 +59,6 @@ if($plot == 'db' || $plot=='cloud') {
         $dbnames[1][$i] = $serverlabel;
     }
     foreach($dbnames[0] as $key => $db){
-/*
-        $sql  = "SELECT UNIX_TIMESTAMP(DateTime) UnixTime, ";
-        $sql .= "LoadAverage, DateTime  ";
-        $sql .= "FROM ServerLoad ";
-        $sql .= "WHERE Hostname = '$db' ";
-        $sql .= "ORDER BY -UnixTime ";
-        if($update == 1) $sql .= "LIMIT 1";
-        else $sql .= "LIMIT $dbscale ";
-*/
         $sql  = "SELECT UNIX_TIMESTAMP(DateTime) UnixTime";
         $sql .= ", LoadAverage, DateTime ";
         $sql .= "FROM ServerLoad ";
@@ -99,11 +90,20 @@ if($plot == 'db' || $plot=='cloud') {
             }
         }
     }
+    $oldkey=-1;
+    if($update==1){
+        foreach($dbnames[0]as $key => $db){
+            if(!array_key_exists($key,$dbarray)){
+                array_splice($dbarray,$key,0,array(array(array(0,0))));
+            }
+        }
+    }
     foreach($dbarray as $key => $a){ 
         $dbarray[$key] = array_reverse($a);
     }
     $data[0]= $dbarray;
     $data[1]= $dbnames[1];
+    
     if(empty($update)) echo json_encode($data);
     else echo json_encode($dbarray);
     exit;

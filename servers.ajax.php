@@ -15,13 +15,11 @@ $plot=$_GET["plot"];
 $xscale=$_GET["xscale"];
 if(empty($xscale)) $xscale = 1;
 if(empty($update)) $update = 0;
-//$plot='db';
 
 $newtime = time();
 $endtime = $newtime-$newtime%60+30;
 if($update==0)$starttime = $endtime-3780*$xscale;
 if($update==1)$starttime = $endtime-60*$xscale;
-//echo "Start: $starttime <br> End: $endtime <br> ";
 
 function formattime($time) {
     settype($time,'int');
@@ -59,22 +57,19 @@ if($plot == 'db' || $plot=='cloud') {
         $dbnames[1][$i] = $serverlabel;
     }
     foreach($dbnames[0] as $key => $db){
+        $sql  = "SELECT UNIX_TIMESTAMP(DateTime) UnixTime";
         $sql .= ", LoadAverage, DateTime ";
         $sql .= "FROM ServerLoad ";
         $sql .= "WHERE Hostname = '$db' ";
         $sql .= "HAVING UnixTime >= $starttime "; 
         $sql .= "AND UnixTime <= $endtime ";
-        $sql .= "AND ROWID%$xscale = 0 ";
         $sql .= "ORDER BY -UnixTime ";
-        //if($update == 1) $sql .= "LIMIT 1";
-        //else $sql .= "LIMIT $dbscale ";
         $rs = mysql_query($sql);
         if($rs) $rsc = mysql_num_rows($rs);
-        echo "SQL:$sql<br>";
         settype($key, "int");
 
         for($i=0; $i < $rsc; $i++){
-            //if($i%$xscale==0){
+            if($i%$xscale==0){
                 $loadavg = mysql_result($rs, $i, 'LoadAverage');
                 $unixtime = mysql_result($rs, $i, 'UnixTime');
                 $testtime = mysql_result($rs, $i, 'DateTime');
@@ -85,9 +80,15 @@ if($plot == 'db' || $plot=='cloud') {
                 settype($unixtime, "int");
 
                 $dbarray[$key][]=Array($converted,$loadavg);
-                //if($key==0) $dbarray[$key][]=Array($converted,$loadavg);
-                //else $dbarray[$key][]=Array($dbarray[0][$i/$xscale][0],$loadavg);
-            //}
+            }
+        }
+    }
+    $oldkey=-1;
+    if($update==1){
+        foreach($dbnames[0]as $key => $db){
+            if(!array_key_exists($key,$dbarray)){
+                array_splice($dbarray,$key,0,array(array(array(0,0))));
+            }
         }
     }
     foreach($dbarray as $key => $a){ 
@@ -95,6 +96,7 @@ if($plot == 'db' || $plot=='cloud') {
     }
     $data[0]= $dbarray;
     $data[1]= $dbnames[1];
+    
     if(empty($update)) echo json_encode($data);
     else echo json_encode($dbarray);
     exit;
