@@ -66,13 +66,11 @@ if($plot == 'db' || $plot=='cloud') {
         $sql .= "HAVING UnixTime >= $starttime "; 
         $sql .= "AND UnixTime <= $endtime ";
         $sql .= "ORDER BY -UnixTime ";
-        //if($update == 1) $sql .= "LIMIT 1";
-        //else $sql .= "LIMIT $dbscale ";
         $rs = mysql_query($sql);
         if($rs) $rsc = mysql_num_rows($rs);
-        //echo "SQL:$sql<br>";
         settype($key, "int");
 
+        $count=0;
         for($i=0; $i < $rsc; $i++){
             if($i%$xscale==0){
                 $loadavg = mysql_result($rs, $i, 'LoadAverage');
@@ -83,10 +81,20 @@ if($plot == 'db' || $plot=='cloud') {
                 settype($loadavg, "float");
                 settype($converted, "int");
                 settype($unixtime, "int");
-
+/*
+                $lasttime=$dbarray[$key][$count-1][0];
+                $timediff=$dbarray[$key][$count-1][0]-$converted;
+                $missing=floor($timediff/$xscale*60);
+                if($update!=1){
+                    for($i=0;$i<$timediff;$i++){
+                        $lasttime-=$xscale*60;
+                        $dbarray[$key][]=Array($converted,3);
+                        $count++;
+                    }
+                }
+*/
                 $dbarray[$key][]=Array($converted,$loadavg);
-                //if($key==0) $dbarray[$key][]=Array($converted,$loadavg);
-                //else $dbarray[$key][]=Array($dbarray[0][$i/$xscale][0],$loadavg);
+                $count++;
             }
         }
     }
