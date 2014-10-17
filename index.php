@@ -749,7 +749,6 @@ function doUpdateDB() {
             }
         };
         if(force==true || change==true){
-            console.log("Cloud update");
             cloudplot.destroy();
             cloudoptions.axes.xaxis.ticks = buildtickarray(xscale,'cloud');
             var width = $('#cloudchart').width();
