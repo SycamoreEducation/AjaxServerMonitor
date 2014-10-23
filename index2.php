@@ -343,10 +343,7 @@ if($task == "")
 <SCRIPT>
 
 function doPageRefresh() {
-    xscale = Number($("#scalehoursdrop").val());
-    //window.location = "index2.php?plot=all&xscale="+xscale;
     location.reload(); 
-    console.log("Refresh");
 }
 function doSidebar(){
   if (sidebar == 0) {
@@ -368,24 +365,30 @@ function doSidebar(){
 
 function changeYAxisDB(x){
     dboptions.axes.yaxis.max = x.value;
-    if (typeof dbplot !== 'undefined') {
+    // if this plot exists, destroy it
+    if (typeof dbplot != 'undefined') {
         dbplot.destroy();
     }
+    // replot the chart
     dbplot = $.jqplot('dbchart', dbarray, dboptions);
 }
 function changeYAxisCloud(x){
     cloudoptions.axes.yaxis.max = x.value;
-    if (typeof cloudplot !== 'undefined') {
+    // if this plot exists, destroy it
+    if (typeof cloudplot != 'undefined') {
         cloudplot.destroy();
     }
+    // replot the chart
     cloudplot = $.jqplot('cloudchart', cloudarray, cloudoptions);
 
 }
 function changeYAxisUser(x){
     useroptions.axes.yaxis.max = x.value;
-    if (typeof userplot !== 'undefined') {
+    // if this plot exists, destroy it
+    if (typeof userplot != 'undefined') {
         userplot.destroy();
     }
+    // replot the chart
     userplot = $.jqplot('userchart', [userarray], useroptions);
 }
 function deepObjCopy (dupeObj) {
@@ -409,13 +412,16 @@ function deepObjCopy (dupeObj) {
 }
 function changeXScale(x){
     xscale = x.value;
+    // stop current update functions
     clearInterval(userintervalID);
     clearInterval(dbintervalID);
+    // set update time based on the X axis scale
     var updateint = 30000;
     if(xscale==1) updateint = 30000;
     else if(xscale>1) updateint = (xscale * 60000);
     dbintervalID = setInterval(doUpdateDB, updateint);
     userintervalID = setInterval(doUpdateUser, updateint);
+    // destroy plots
     if (typeof dbplot !== 'undefined') {
         dbplot.destroy();
     }
@@ -433,8 +439,9 @@ function buildtickarray(scale,plot){
     var count = 0;
     // get current unix timestamp
     var start = Math.round(Date.now()/1000);
-    // adjust the current 
+    // adjust scale to handle the user table 
     var plotscale = ((plot=='user') ? 10 : 1);
+    // round down to nearest minute or 10 minutes for user table
     start = start-(start%(60*plotscale));
         
     var tzstart = start;
@@ -454,7 +461,7 @@ function buildtickarray(scale,plot){
     var hours = Math.floor(minutes/60);
     // extra hours 
     var extrahours = hours%24;
-    //
+    // set the axis ticks to match graph scale
     var numticks = ((scale%5==0) ? 6 : 7);
     
     for(var i=0;i<numticks;i++){
@@ -694,20 +701,22 @@ function doUpdateDB() {
     $.getJSON("index2.php?plot=db&update=1",function(update){
         var change = false;
         var force = false;
+        // get current unix timestamp
         var currentmin = Math.round(Date.now()/1000);
+        // round to last minute
         currentmin=currentmin-currentmin%60;
         var fakemin = currentmin;
+        // loop through servers
         for(i = 0; i < update.length; i++) {
             var newmin = parseInt(update[i][0][0]);
             var oldmin = parseInt(dbarray[i][dbarray[i].length-1][0]);
             var diff=parseInt(currentmin)-parseInt(newmin);
-            //console.log("Fake "+ fakemin);
             console.log(newmin-oldmin);
             if(newmin-oldmin>=(60*xscale)){
-            console.log("change"+i);
-            dbarray[i].shift();
-            dbarray[i].push(update[i][0]);
-            change = true;
+                console.log("change"+i);
+                dbarray[i].shift();
+                dbarray[i].push(update[i][0]);
+                change = true;
             }else if(diff >= xscale*60){
                 var fakeupdate=[fakemin,0];
                 console.log("force"+i);
@@ -775,9 +784,10 @@ function doUpdateUser() {
 */
         var interval = 600;
         var change = false;
-        var newmin = parseInt(update[0][0]);
+        var newmin = 0; 
+        if(update) newmin = parseInt(update[0][0]);
         var oldmin = parseInt(userarray[userarray.length-1][0]);
-        var diff = parseInt(currentmin)-parseInt(newmin);
+        var diff = parseInt(currentmin)-parseInt(oldmin);
         if(newmin-oldmin == interval){
             userarray.shift();
             userarray.push(update[0]);
@@ -786,8 +796,9 @@ function doUpdateUser() {
             var fakeupdate=[fakemin,0];
             userarray[i].shift();
             userarray[i].push(fakeupdate);
+            change = true;
         }
-        if(currentmin - oldmin >= 600){
+        if(change == true){
             userplot.destroy();
             useroptions.axes.xaxis.ticks = buildtickarray(xscale,'user');
             var width = $('#cloudchart').width();
