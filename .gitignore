@@ -1,6 +1,7 @@
+.gitignore
 passwords.inc
-indexstage.php
-serverstage.php
+indexs.php
+serverss.php
 index2.php
 servers2.ajax.php
 test.php
