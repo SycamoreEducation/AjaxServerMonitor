@@ -15,14 +15,23 @@ $plot=$_GET["plot"];
 $xscale=$_GET["xscale"];
 if(empty($xscale)) $xscale = 1;
 if(empty($update)) $update = 0;
+//$plot='db';
 
+//get timestamp
 $newtime = time();
-$endtime = $newtime-$newtime%60+30;
-if($update==0)$starttime = $endtime-3780*$xscale;
+//round down to nearest minute or nearest 10 minutes for user graph
+if($plot == 'user') $endtime = $newtime-$newtime%600;
+else $endtime = $newtime-$newtime%60;
+
+//get relevant start time for the x scale
+if($update==0)$starttime = $endtime-3660*$xscale;
+//only get data from the last minute for update
 if($update==1)$starttime = $endtime-60*$xscale;
+//echo "Start: $starttime <br> End: $endtime <br> ";
 
 function formattime($time) {
     settype($time,'int');
+    // force all times to nearest minute
     if($time%60 >= 30){
         $time += 60-$time%60;
     }elseif($time%60<30){
@@ -63,11 +72,14 @@ if($plot == 'db' || $plot=='cloud') {
         $sql .= "WHERE Hostname = '$db' ";
         $sql .= "HAVING UnixTime >= $starttime "; 
         $sql .= "AND UnixTime <= $endtime ";
-        $sql .= "ORDER BY -UnixTime ";
+        $sql .= "ORDER BY UnixTime ";
+        if($update) $sql .= "DESC LIMIT 1";
+        else $sql .= "ASC";
         $rs = mysql_query($sql);
         if($rs) $rsc = mysql_num_rows($rs);
         settype($key, "int");
 
+        $count=0;
         for($i=0; $i < $rsc; $i++){
             if($i%$xscale==0){
                 $loadavg = mysql_result($rs, $i, 'LoadAverage');
@@ -78,21 +90,48 @@ if($plot == 'db' || $plot=='cloud') {
                 settype($loadavg, "float");
                 settype($converted, "int");
                 settype($unixtime, "int");
-
+                $thisindex = count($dbarray[$key])-1;
+                $converted+=60*$xscale;
+                if($update!=1 && $i>0){
+                    $lasttime=$dbarray[$key][$thisindex][0];
+                    settype($lasttime, "int");
+                    //if($key==1)echo "LAST: $lasttime Current: $converted Count $thisindex  I $i<br>";
+                    while($converted-$lasttime > $xscale*60){
+                        $diff=$converted - $lasttime;
+                        //if($key==1)echo "LAST: $lasttime Con: $converted Diff: $diff<br>";
+                        $lasttime+=$xscale*60;
+                        $dbarray[$key][]=Array($lasttime,0);
+                    }
+                }
                 $dbarray[$key][]=Array($converted,$loadavg);
             }
         }
     }
-    $oldkey=-1;
-    if($update==1){
-        foreach($dbnames[0]as $key => $db){
-            if(!array_key_exists($key,$dbarray)){
-                array_splice($dbarray,$key,0,array(array(array(0,0))));
+    if(!$update){
+        foreach($dbarray as $key => $db){
+            $dataend = $dbarray[$key][count($db)-1][0];
+            $datastart = $dbarray[$key][0][0];
+            while($endtime - $dataend >= ($xscale*60)){
+                $dataend+=$xscale*60;
+                $fakearray1=array($dataend,0);
+                array_push($dbarray[$key],$fakearray1);
+            }
+            while($datastart - $starttime >= $xscale*60){
+                $datastart-=$xscale*60;
+                $fakearray2=array($datastart,0);
+                array_unshift($dbarray[$key],$fakearray2);
             }
         }
     }
-    foreach($dbarray as $key => $a){ 
-        $dbarray[$key] = array_reverse($a);
+    if($update==1){
+        foreach($dbnames[0]as $key => $db){
+            if(!array_key_exists($key,$dbarray)){
+                settype($endtime,'int');
+                $dbarray[$key][]=Array($endtime,0);
+                //if(empty($dbarray)) $dbarray[$key][]=Array($endtime,0);
+                //else array_splice($dbarray,$key,0,array(array(array($endtime,0))));
+            }
+        }
     }
     $data[0]= $dbarray;
     $data[1]= $dbnames[1];
@@ -107,14 +146,17 @@ if($plot=='user'){
     $userticks=Array();
 
     $userscale = $xscale *6 +1;
-    if($xscale == 1 || $xscale == 24) $filter=$xscale;
-    else $filter = $xscale/5 + $xscale;
+    //if($xscale == 1 || $xscale == 24) $filter=$xscale;
+    //else $filter = $xscale/5 + $xscale;
     
-    $sql  ="SELECT UNIX_TIMESTAMP(Date) UnixTime, Count ";
-    $sql .="FROM Whoson ";
-    $sql .="ORDER BY -UnixTime "; 
-    if($update) $sql .="LIMIT 1 ";
-    else $sql .="LIMIT $userscale ";
+    $sql  = "SELECT UNIX_TIMESTAMP(Date) UnixTime, Count ";
+    $sql .= "FROM Whoson ";
+    $sql .= "HAVING UnixTime >= $starttime "; 
+    $sql .= "AND UnixTime <= $newtime ";
+    $sql .= "ORDER BY UnixTime ASC "; 
+    if($update) $sql .= "LIMIT 1 ";
+    //else $sql .= "LIMIT $userscale ";
+    //echo "$sql <br>";
     $rs = mysql_query($sql);
     if($rs) $rsc = mysql_num_rows($rs);
     
@@ -128,7 +170,8 @@ if($plot=='user'){
         settype($converted,"int");
         $userarray[]=Array($converted,$usercount);
     }
-    $data = array_reverse($userarray);
+    //$data = array_reverse($userarray);
+    $data = $userarray;
     echo json_encode($data);
     exit;
     

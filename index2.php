@@ -459,7 +459,7 @@ function buildtickarray(scale,plot){
     
     for(var i=0;i<numticks;i++){
         // increment timestamp
-        var newtime=((plot=='user') ? start-(600*i*scale) : start-(600*i*scale)-60);
+        var newtime=((plot=='user') ? start-(600*i*scale) : start-(600*i*scale));
         var newhour = extrahours;
         var newminute = extraminutes;
         // increment tick minutes and hours based on X scale
@@ -483,7 +483,6 @@ function buildtickarray(scale,plot){
         var newtick=newhour+":"+newminute;
         tickarray[i] = [newtime,newtick];
     }
-                    
     tickarray.reverse();
     return tickarray;
 }
@@ -496,7 +495,6 @@ function drawplots(xscale, plot){
             dbarray = currentdbresults[0]; 
             dbnames = currentdbresults[1]; 
             dbtickarray = buildtickarray(xscale,'db');
-            
             dboptions = {
                 textColor:'#AAAAAA',
                 title: {
@@ -536,6 +534,7 @@ function drawplots(xscale, plot){
                     bringSeriesToFront: true,
                     tooltipContentEditor: function(str, seriesIndex, pointIndex, plot){
                         return plot.series[seriesIndex]["label"] + ", " + plot.data[seriesIndex][pointIndex][1];
+                        //return plot.series[seriesIndex]["label"] + ", " + plot.data[seriesIndex][pointIndex][0] + ", " + plot.data[seriesIndex][pointIndex][1];
                     } 
                 },
                 seriesDefaults: {
@@ -608,6 +607,7 @@ function drawplots(xscale, plot){
                     tooltipContentEditor: function(str, seriesIndex, pointIndex, plot){
                         return plot.series[seriesIndex]["label"] + ", " + plot.data[seriesIndex][pointIndex][1];
                     } 
+//plot.options.axes.xaxis.ticks[pointIndex]
                 },
                 seriesDefaults: {
                     lineWidth: 1,
@@ -637,7 +637,6 @@ function drawplots(xscale, plot){
             var yscale = e.options[e.selectedIndex].value;
 
             userarray = deepObjCopy(userresults);
-            var start = userarray[6*xscale][0];
             usertickarray = buildtickarray(xscale,'user'); 
 
             useroptions = {
@@ -685,32 +684,31 @@ function drawplots(xscale, plot){
                     }
                 ]
             };
-            
-
             $('#userchart').height(plotheight);
             userplot = $.jqplot('userchart', [userarray], useroptions);
             $('.jqplot-title').css('left',titleleft);
         });
     }
-};    
-function doUpdateDB() {      
+};
+function doUpdateDB() {
     $.getJSON("index2.php?plot=db&update=1",function(update){
         var change = false;
         var force = false;
         var currentmin = Math.round(Date.now()/1000);
-        currentmin=currentmin-currentmin%(60*xscale);
+        currentmin=currentmin-currentmin%60;
         var fakemin = currentmin;
         for(i = 0; i < update.length; i++) {
-            var newmin = update[i][0][0];
-            var oldmin = dbarray[i][dbarray[i].length-1][0];
+            var newmin = parseInt(update[i][0][0]);
+            var oldmin = parseInt(dbarray[i][dbarray[i].length-1][0]);
             var diff=parseInt(currentmin)-parseInt(newmin);
-            console.log("Fake"+fakemin);
-            if(newmin-oldmin == xscale*60){
-                console.log("change"+i);
-                dbarray[i].shift();
-                dbarray[i].push(update[i][0]);
-                change = true;
-            }else if(currentmin - oldmin>=xscale*60){
+            //console.log("Fake "+ fakemin);
+            console.log(newmin-oldmin);
+            if(newmin-oldmin>=(60*xscale)){
+            console.log("change"+i);
+            dbarray[i].shift();
+            dbarray[i].push(update[i][0]);
+            change = true;
+            }else if(diff >= xscale*60){
                 var fakeupdate=[fakemin,0];
                 console.log("force"+i);
                 dbarray[i].shift();
@@ -733,27 +731,27 @@ function doUpdateDB() {
         };
     });
     $.getJSON("index2.php?plot=cloud&update=1",function(update){
-        var changec = false;
-        var forcec = false;
-        var currentminc = Math.round(Date.now()/1000);
-        currentminc=currentminc-currentminc%(60*xscale);
-        var fakeminc = currentminc;
+        var change = false;
+        var force = false;
+        var currentmin = Math.round(Date.now()/1000);
+        currentmin=currentmin-currentmin%60;
+        var fakemin = currentmin;
         for(i = 0; i < update.length; i++) {
-            var newminc = update[i][0][0];
-            var diffc=parseInt(currentminc)-parseInt(newminc);
-            var oldminc = cloudarray[i][cloudarray[i].length-1][0];
-            if(newminc-oldminc == xscale*60){
+            var newmin = parseInt(update[i][0][0]);
+            var oldmin = parseInt(cloudarray[i][cloudarray[i].length-1][0]);
+            var diff=parseInt(currentmin)-parseInt(newmin);
+            if(newmin-oldmin>=(60*xscale)){
                 cloudarray[i].shift();
                 cloudarray[i].push(update[i][0]);
-                changec = true;
-            }else if(newminc - oldminc>=xscale*60){
+                change = true;
+            }else if(diff >= xscale*60){
+                var fakeupdate=[fakemin,0];
                 cloudarray[i].shift();
-                cloudarray[i].push(fakeminc,0);
-                var forcec = true;
+                cloudarray[i].push(fakeupdate);
+                force = true;
             }
         };
-        if(forcec==true || changec==true){
-            //console.log("Cloud update");
+        if(force==true || change==true){
             cloudplot.destroy();
             cloudoptions.axes.xaxis.ticks = buildtickarray(xscale,'cloud');
             var width = $('#cloudchart').width();
@@ -766,20 +764,29 @@ function doUpdateDB() {
 }
 function doUpdateUser() {
     $.getJSON("index2.php?plot=user&update=1",function(update){
+        var currentmin = Math.round(Date.now()/1000);
+        var fakemin = currentmin;
+/*
         if(xscale > 10){
             var interval = 1440;
         }else{
             var interval = 600;
         }  
+*/
+        var interval = 600;
         var change = false;
-        var newmin = update[0][0];
-        var oldmin = userarray[userarray.length-1][0];
+        var newmin = parseInt(update[0][0]);
+        var oldmin = parseInt(userarray[userarray.length-1][0]);
+        var diff = parseInt(currentmin)-parseInt(newmin);
         if(newmin-oldmin == interval){
             userarray.shift();
             userarray.push(update[0]);
             change = true;
+        }else if(diff >= interval){
+            var fakeupdate=[fakemin,0];
+            userarray[i].shift();
+            userarray[i].push(fakeupdate);
         }
-        var currentmin = Math.round(Date.now()/1000);
         if(currentmin - oldmin >= 600){
             userplot.destroy();
             useroptions.axes.xaxis.ticks = buildtickarray(xscale,'user');
