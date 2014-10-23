@@ -702,24 +702,24 @@ function doUpdateDB() {
             var oldmin = parseInt(dbarray[i][dbarray[i].length-1][0]);
             var diff=parseInt(currentmin)-parseInt(newmin);
             //console.log("Fake "+ fakemin);
-            console.log(newmin-oldmin);
+            //console.log(newmin-oldmin);
             if(newmin-oldmin>=(60*xscale)){
-            console.log("change"+i);
+            //console.log("change"+i);
             dbarray[i].shift();
             dbarray[i].push(update[i][0]);
             change = true;
             }else if(diff >= xscale*60){
                 var fakeupdate=[fakemin,0];
-                console.log("force"+i);
+                //console.log("force"+i);
                 dbarray[i].shift();
                 dbarray[i].push(fakeupdate);
                 force = true;
             }
         };
-        console.log("C "+currentmin);
-        console.log("N "+newmin);
-        console.log("D "+diff);
-        console.log("O "+oldmin);
+        //console.log("C "+currentmin);
+        //console.log("N "+newmin);
+        //console.log("D "+diff);
+        //console.log("O "+oldmin);
         if(force==true || change==true){
             dbplot.destroy();
             dboptions.axes.xaxis.ticks = buildtickarray(xscale,'db');
