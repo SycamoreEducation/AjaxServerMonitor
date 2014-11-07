@@ -28,14 +28,13 @@ if($update==0)$starttime = $endtime-3660*$xscale;
 //only get data from the last minute for update
 if($update==1)$starttime = $endtime-60*$xscale;
 //echo "Start: $starttime <br> End: $endtime <br> ";
-
 function formattime($time) {
     settype($time,'int');
     // force all times to nearest minute
     if($time%60 >= 30){
         $time += 60-$time%60;
     }elseif($time%60<30){
-        $time-= $time%60;
+        $time -= $time%60;
     }
     return $time; 
 }
@@ -51,7 +50,6 @@ if($plot == 'db' || $plot=='cloud') {
     $data = Array(Array());
     $dbnames = Array();
     $dbarray = Array();
-    $dbticks = Array();
 
     $sql  = "SELECT Label, Name FROM ServerNames ";
     $sql .= "WHERE Type = $type ";
@@ -127,9 +125,8 @@ if($plot == 'db' || $plot=='cloud') {
         foreach($dbnames[0]as $key => $db){
             if(!array_key_exists($key,$dbarray)){
                 settype($endtime,'int');
-                $dbarray[$key][]=Array($endtime,0);
-                //if(empty($dbarray)) $dbarray[$key][]=Array($endtime,0);
-                //else array_splice($dbarray,$key,0,array(array(array($endtime,0))));
+                if(empty($dbarray)) $dbarray[$key][]=Array($endtime,0);
+                else array_splice($dbarray,$key,0,array(array(array($endtime,0))));
             }
         }
     }
@@ -143,7 +140,6 @@ if($plot == 'db' || $plot=='cloud') {
 if($plot=='user'){
     $data=Array(Array());
     $userarray=Array();
-    $userticks=Array();
 
     $userscale = $xscale *6 +1;
     //if($xscale == 1 || $xscale == 24) $filter=$xscale;

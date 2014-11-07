@@ -28,7 +28,6 @@ if($update==0)$starttime = $endtime-3660*$xscale;
 //only get data from the last minute for update
 if($update==1)$starttime = $endtime-60*$xscale;
 //echo "Start: $starttime <br> End: $endtime <br> ";
-
 function formattime($time) {
     settype($time,'int');
     // force all times to nearest minute

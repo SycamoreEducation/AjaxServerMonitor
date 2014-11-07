@@ -379,7 +379,6 @@ function changeYAxisCloud(x){
         cloudplot.destroy();
     }
     cloudplot = $.jqplot('cloudchart', cloudarray, cloudoptions);
-
 }
 function changeYAxisUser(x){
     useroptions.axes.yaxis.max = x.value;
@@ -408,7 +407,7 @@ function deepObjCopy (dupeObj) {
     return retObj;
 }
 function changeXScale(x){
-    xscale = x.value;
+    xscale = Number(x.value);
     clearInterval(userintervalID);
     clearInterval(dbintervalID);
     var updateint = 30000;
@@ -427,7 +426,6 @@ function changeXScale(x){
     }
     drawplots(xscale, 'all');
 }
-
 function buildtickarray(scale,plot){
     var tickarray = [];
     var count = 0;
@@ -454,12 +452,13 @@ function buildtickarray(scale,plot){
     var hours = Math.floor(minutes/60);
     // extra hours 
     var extrahours = hours%24;
-    //
+
     var numticks = ((scale%5==0) ? 6 : 7);
+    
     
     for(var i=0;i<numticks;i++){
         // increment timestamp
-        var newtime=((plot=='user') ? start-(600*i*scale) : start-(600*i*scale));
+        var newtime=((numticks == 6) ? start-600*i*(scale/5+scale) : start-600*i*scale);
         var newhour = extrahours;
         var newminute = extraminutes;
         // increment tick minutes and hours based on X scale
@@ -486,7 +485,6 @@ function buildtickarray(scale,plot){
     tickarray.reverse();
     return tickarray;
 }
-
 function drawplots(xscale, plot){
     if(plot == 'db' || plot == 'all'){
         $.getJSON("index.php?plot=db&xscale="+xscale,function(dbresults){
@@ -544,7 +542,6 @@ function drawplots(xscale, plot){
             };
         
             dboptions.series = [];  
-
             dbnames.forEach(function(entry){
                 dboptions.series.push({
                     "label": entry,
@@ -566,8 +563,6 @@ function drawplots(xscale, plot){
             cloudarray = currentcloudresults[0]; 
             cloudnames = currentcloudresults[1]; 
             cloudtickarray = buildtickarray(xscale,'cloud');
-
-
             cloudoptions = {
                 title: {
                     text: 'Cloud Servers',

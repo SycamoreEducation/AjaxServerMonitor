@@ -346,7 +346,7 @@ function doPageRefresh() {
     xscale = Number($("#scalehoursdrop").val());
     //window.location = "index.php?plot=all&xscale="+xscale;
     location.reload(); 
-    console.log("Refresh");
+    //console.log("Refresh");
 }
 function doSidebar(){
   if (sidebar == 0) {
@@ -379,7 +379,6 @@ function changeYAxisCloud(x){
         cloudplot.destroy();
     }
     cloudplot = $.jqplot('cloudchart', cloudarray, cloudoptions);
-
 }
 function changeYAxisUser(x){
     useroptions.axes.yaxis.max = x.value;
@@ -408,7 +407,7 @@ function deepObjCopy (dupeObj) {
     return retObj;
 }
 function changeXScale(x){
-    xscale = x.value;
+    xscale = Number(x.value);
     clearInterval(userintervalID);
     clearInterval(dbintervalID);
     var updateint = 30000;
@@ -427,7 +426,6 @@ function changeXScale(x){
     }
     drawplots(xscale, 'all');
 }
-
 function buildtickarray(scale,plot){
     var tickarray = [];
     var count = 0;
@@ -454,12 +452,13 @@ function buildtickarray(scale,plot){
     var hours = Math.floor(minutes/60);
     // extra hours 
     var extrahours = hours%24;
-    //
+
     var numticks = ((scale%5==0) ? 6 : 7);
+    
     
     for(var i=0;i<numticks;i++){
         // increment timestamp
-        var newtime=((plot=='user') ? start-(600*i*scale) : start-(600*i*scale));
+        var newtime=((numticks == 6) ? start-600*i*(scale/5+scale) : start-600*i*scale);
         var newhour = extrahours;
         var newminute = extraminutes;
         // increment tick minutes and hours based on X scale
@@ -486,7 +485,6 @@ function buildtickarray(scale,plot){
     tickarray.reverse();
     return tickarray;
 }
-
 function drawplots(xscale, plot){
     if(plot == 'db' || plot == 'all'){
         $.getJSON("index.php?plot=db&xscale="+xscale,function(dbresults){
@@ -544,7 +542,6 @@ function drawplots(xscale, plot){
             };
         
             dboptions.series = [];  
-
             dbnames.forEach(function(entry){
                 dboptions.series.push({
                     "label": entry,
@@ -566,8 +563,6 @@ function drawplots(xscale, plot){
             cloudarray = currentcloudresults[0]; 
             cloudnames = currentcloudresults[1]; 
             cloudtickarray = buildtickarray(xscale,'cloud');
-
-
             cloudoptions = {
                 title: {
                     text: 'Cloud Servers',
@@ -689,6 +684,7 @@ function drawplots(xscale, plot){
             $('.jqplot-title').css('left',titleleft);
         });
     }
+    setInterval(doPageRefresh,600000);
 };
 function doUpdateDB() {
     $.getJSON("index.php?plot=db&update=1",function(update){
@@ -702,24 +698,17 @@ function doUpdateDB() {
             var oldmin = parseInt(dbarray[i][dbarray[i].length-1][0]);
             var diff=parseInt(currentmin)-parseInt(newmin);
             //console.log("Fake "+ fakemin);
-            //console.log(newmin-oldmin);
             if(newmin-oldmin>=(60*xscale)){
-            //console.log("change"+i);
-            dbarray[i].shift();
-            dbarray[i].push(update[i][0]);
-            change = true;
+                dbarray[i].shift();
+                dbarray[i].push(update[i][0]);
+                change = true;
             }else if(diff >= xscale*60){
                 var fakeupdate=[fakemin,0];
-                //console.log("force"+i);
                 dbarray[i].shift();
                 dbarray[i].push(fakeupdate);
                 force = true;
             }
         };
-        //console.log("C "+currentmin);
-        //console.log("N "+newmin);
-        //console.log("D "+diff);
-        //console.log("O "+oldmin);
         if(force==true || change==true){
             dbplot.destroy();
             dboptions.axes.xaxis.ticks = buildtickarray(xscale,'db');
@@ -740,17 +729,24 @@ function doUpdateDB() {
             var newmin = parseInt(update[i][0][0]);
             var oldmin = parseInt(cloudarray[i][cloudarray[i].length-1][0]);
             var diff=parseInt(currentmin)-parseInt(newmin);
+            //console.log(newmin-oldmin);
             if(newmin-oldmin>=(60*xscale)){
+                //console.log("change"+i);
                 cloudarray[i].shift();
                 cloudarray[i].push(update[i][0]);
                 change = true;
             }else if(diff >= xscale*60){
                 var fakeupdate=[fakemin,0];
+                //console.log("force"+i);
                 cloudarray[i].shift();
                 cloudarray[i].push(fakeupdate);
                 force = true;
             }
         };
+        //console.log("C "+currentmin);
+        //console.log("N "+newmin);
+        //console.log("D "+diff);
+        //console.log("O "+oldmin);
         if(force==true || change==true){
             cloudplot.destroy();
             cloudoptions.axes.xaxis.ticks = buildtickarray(xscale,'cloud');
@@ -765,14 +761,7 @@ function doUpdateDB() {
 function doUpdateUser() {
     $.getJSON("index.php?plot=user&update=1",function(update){
         var currentmin = Math.round(Date.now()/1000);
-        var fakemin = currentmin;
-/*
-        if(xscale > 10){
-            var interval = 1440;
-        }else{
-            var interval = 600;
-        }  
-*/
+        var fakemin = currentmin-currentmin%600;
         var interval = 600;
         var change = false;
         var newmin = parseInt(update[0][0]);
@@ -832,7 +821,6 @@ $(document).ready(function() {
     else if(xscale>1) updateint = (xscale * 60000);
     dbintervalID = setInterval(doUpdateDB, updateint);
     userintervalID = setInterval(doUpdateUser, updateint);
-    //setInterval(doPageRefresh,10000);
 });
 
 </SCRIPT>
